@@ -11,11 +11,15 @@ public class Client {
         int port = 8010;
         InetAddress address = InetAddress.getByName("localhost");
         Socket socket = new Socket(address,port);
-        PrintWriter toSocket = new PrintWriter(socket.getOutputStream());
+        PrintWriter toSocket = new PrintWriter(socket.getOutputStream(),true);
         BufferedReader fromSocket = new BufferedReader( new InputStreamReader(socket.getInputStream()));
         toSocket.println("Hello From the Client");
         String line = fromSocket.readLine();
         System.out.println("Response from the Socket is : "+line);
+
+        fromSocket.close();
+        toSocket.close();
+        socket.close();
 
     }
 
