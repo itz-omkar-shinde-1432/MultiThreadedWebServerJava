@@ -7,77 +7,68 @@ import java.net.Socket;
 
 public class Server {
 
-    // Handles one client
-    public void handleClient(Socket acceptedConnection) {
+    private static final int PORT = 8010;
 
-        try {
+    private void handleClient(Socket clientSocket) {
+        System.out.println("[THREAD] Handling client: " +
+                clientSocket.getRemoteSocketAddress());
 
-            PrintWriter toClient =
-                    new PrintWriter(
-                            acceptedConnection.getOutputStream(),
-                            true);
+        try (
+            PrintWriter toClient = new PrintWriter(clientSocket.getOutputStream(), true);
+            BufferedReader fromClient = new BufferedReader(
+                    new InputStreamReader(clientSocket.getInputStream()))
+        ) {
 
-            BufferedReader fromClient =
-                    new BufferedReader(
-                            new InputStreamReader(
-                                    acceptedConnection.getInputStream()));
+            String message = fromClient.readLine();
 
-            String clientMessage =
-                    fromClient.readLine();
+            System.out.println("[MESSAGE] From " +
+                    clientSocket.getRemoteSocketAddress() +
+                    " -> " + message);
 
-            System.out.println(
-                    "Client "
-                            + acceptedConnection.getRemoteSocketAddress()
-                            + " says: "
-                            + clientMessage);
+            toClient.println("Hello from server 👋");
 
-            toClient.println("Hello From the Server");
+            System.out.println("[DONE] Response sent to " +
+                    clientSocket.getRemoteSocketAddress());
 
-            toClient.close();
-            fromClient.close();
-            acceptedConnection.close();
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("[ERROR] Client handling failed: " + e.getMessage());
+        } finally {
+            try {
+                clientSocket.close();
+                System.out.println("[DISCONNECTED] Client closed: " +
+                        clientSocket.getRemoteSocketAddress());
+            } catch (IOException e) {
+                System.out.println("[ERROR] Closing socket failed");
+            }
         }
     }
 
-    public void run() throws IOException {
+    public void run() {
 
-        int port = 8010;
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
 
-        // Create server
-        ServerSocket socket =
-                new ServerSocket(port);
+            System.out.println("==================================");
+            System.out.println("🚀 SERVER STARTED");
+            System.out.println("📡 Port: " + PORT);
+            System.out.println("⏳ Waiting for clients...");
+            System.out.println("==================================");
 
-        while (true) {
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
 
-            // Wait for client
-            Socket acceptedConnection =
-                    socket.accept();
+                System.out.println("\n[CONNECTED] Client: " +
+                        clientSocket.getRemoteSocketAddress());
 
-            System.out.println(
-                    "Client connected: "
-                            + acceptedConnection.getRemoteSocketAddress());
+                Thread thread = new Thread(() -> handleClient(clientSocket));
+                thread.start();
+            }
 
-            // Create thread
-            Thread thread =
-                    new Thread(() ->
-                            handleClient(acceptedConnection));
-
-            // Start thread
-            thread.start();
+        } catch (IOException e) {
+            System.out.println("[SERVER ERROR] " + e.getMessage());
         }
     }
 
-    public static void main(String args[]) {
-
-        Server server = new Server();
-
-        try {
-            server.run();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    public static void main(String[] args) {
+        new Server().run();
     }
 }

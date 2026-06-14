@@ -7,63 +7,47 @@ import java.io.InputStreamReader;
 
 public class Client {
 
-    // One client task
-    public Runnable getRunnable() {
+    private static final int PORT = 8010;
+
+    private Runnable createClientTask() {
 
         return () -> {
-
             try {
+                InetAddress address = InetAddress.getByName("localhost");
 
-                int port = 8010;
+                try (Socket socket = new Socket(address, PORT);
+                     PrintWriter toSocket = new PrintWriter(socket.getOutputStream(), true);
+                     BufferedReader fromSocket = new BufferedReader(
+                             new InputStreamReader(socket.getInputStream()))) {
 
-                InetAddress address =
-                        InetAddress.getByName("localhost");
+                    System.out.println("[CLIENT] Connected -> " +
+                            socket.getLocalSocketAddress());
 
-                Socket socket =
-                        new Socket(address, port);
+                    String msg = "Hello from client " +
+                            socket.getLocalSocketAddress();
 
-                PrintWriter toSocket =
-                        new PrintWriter(
-                                socket.getOutputStream(),
-                                true);
+                    toSocket.println(msg);
 
-                BufferedReader fromSocket =
-                        new BufferedReader(
-                                new InputStreamReader(
-                                        socket.getInputStream()));
+                    String response = fromSocket.readLine();
 
-                toSocket.println(
-                        "Hello From Client "
-                                + socket.getLocalSocketAddress());
+                    System.out.println("[SERVER RESPONSE] " + response);
 
-                String line =
-                        fromSocket.readLine();
+                }
 
-                System.out.println(
-                        "Response: " + line);
-
-                fromSocket.close();
-                toSocket.close();
-                socket.close();
-
-            } catch (IOException ex) {
-                ex.printStackTrace();
+            } catch (IOException e) {
+                System.out.println("[CLIENT ERROR] " + e.getMessage());
             }
         };
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
 
         Client client = new Client();
 
-        // Create 100 clients
+        System.out.println("Starting 100 clients...\n");
+
         for (int i = 0; i < 100; i++) {
-
-            Thread thread =
-                    new Thread(
-                            client.getRunnable());
-
-            thread.start();
+            new Thread(client.createClientTask()).start();
         }
     }
 }
