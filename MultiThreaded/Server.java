@@ -8,32 +8,34 @@ import java.net.Socket;
 public class Server {
 
     // Handles one client
-    public void handleClient(Socket clientSocket) {
+    public void handleClient(Socket acceptedConnection) {
 
         try {
-            BufferedReader fromClient =
-                    new BufferedReader(
-                            new InputStreamReader(
-                                    clientSocket.getInputStream()));
 
             PrintWriter toClient =
                     new PrintWriter(
-                            clientSocket.getOutputStream(),
+                            acceptedConnection.getOutputStream(),
                             true);
 
-            String message = fromClient.readLine();
+            BufferedReader fromClient =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    acceptedConnection.getInputStream()));
+
+            String clientMessage =
+                    fromClient.readLine();
 
             System.out.println(
                     "Client "
-                            + clientSocket.getRemoteSocketAddress()
+                            + acceptedConnection.getRemoteSocketAddress()
                             + " says: "
-                            + message);
+                            + clientMessage);
 
             toClient.println("Hello From the Server");
 
-            fromClient.close();
             toClient.close();
-            clientSocket.close();
+            fromClient.close();
+            acceptedConnection.close();
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -44,36 +46,37 @@ public class Server {
 
         int port = 8010;
 
-        // Creates server on port 8010
-        ServerSocket serverSocket = new ServerSocket(port);
-
-        System.out.println(
-                "Server is listening on port " + port);
+        // Create server
+        ServerSocket socket =
+                new ServerSocket(port);
 
         while (true) {
 
-            // Waits for a client
-            Socket clientSocket = serverSocket.accept();
+            // Wait for client
+            Socket acceptedConnection =
+                    socket.accept();
 
             System.out.println(
                     "Client connected: "
-                            + clientSocket.getRemoteSocketAddress());
+                            + acceptedConnection.getRemoteSocketAddress());
 
-            // New thread for each client
-            Thread thread = new Thread(() ->
-                    handleClient(clientSocket));
+            // Create thread
+            Thread thread =
+                    new Thread(() ->
+                            handleClient(acceptedConnection));
 
+            // Start thread
             thread.start();
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String args[]) {
 
         Server server = new Server();
 
         try {
             server.run();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }

@@ -1,6 +1,13 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
+
 public class Client {
 
-    // Creates work for one client thread
+    // Client task
     public Runnable getRunnable() {
 
         return new Runnable() {
@@ -13,23 +20,23 @@ public class Client {
 
                 try {
 
-                    // Gets localhost address
+                    // Server address
                     InetAddress address =
                             InetAddress.getByName("localhost");
 
-                    // Connects to server
+                    // Connect to server
                     Socket socket =
                             new Socket(address, port);
 
                     try (
 
-                        // Sends data to server
+                        // Send data
                         PrintWriter toSocket =
                                 new PrintWriter(
                                         socket.getOutputStream(),
                                         true);
 
-                        // Reads data from server
+                        // Receive data
                         BufferedReader fromSocket =
                                 new BufferedReader(
                                         new InputStreamReader(
@@ -37,17 +44,17 @@ public class Client {
 
                     ) {
 
-                        // Sends message
+                        // Send message
                         toSocket.println(
                                 "Hello from Client "
                                         + socket.getLocalSocketAddress());
 
-                        // Receives response
+                        // Read response
                         String line = fromSocket.readLine();
 
-                        // Prints response
+                        // Print response
                         System.out.println(
-                                "Response from Server "
+                                "Response from Server: "
                                         + line);
                     }
 
@@ -60,19 +67,19 @@ public class Client {
 
     public static void main(String[] args) {
 
-        // Creates client object
+        // Create client
         Client client = new Client();
 
-        // Creates 100 clients
+        // Create 100 threads
         for (int i = 0; i < 100; i++) {
 
             try {
 
-                // Creates thread
+                // New thread
                 Thread thread =
                         new Thread(client.getRunnable());
 
-                // Starts thread
+                // Start thread
                 thread.start();
 
             } catch (Exception ex) {
